@@ -1,0 +1,75 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+#define TRIG_PIN 9
+#define ECHO_PIN 10
+#define BUZZER 6
+#define LED_GREEN 4
+#define LED_RED 5
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+long duration;
+int distance;
+
+void setup() {
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
+
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print(" Parking Sensor ");
+  lcd.setCursor(0, 1);
+  lcd.print(" System Ready ");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+
+  // ===== วัดระยะ =====
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+  duration = pulseIn(ECHO_PIN, HIGH, 30000);
+  distance = duration * 0.034 / 2;
+
+  // ===== แสดงผล LCD ตลอด =====
+  lcd.setCursor(0, 0);
+  lcd.print("Distance:      ");
+  lcd.setCursor(0, 1);
+  lcd.print(distance);
+  lcd.print(" cm        ");
+
+  // ===== LED เขียวติดตลอด =====
+  digitalWrite(LED_GREEN, HIGH);
+
+  // ===== ระยะอันตราย 5–10 cm =====
+  if (distance >= 5 && distance <= 10) {
+
+    // LED แดงกระพริบ
+    digitalWrite(LED_RED, HIGH);
+
+    // เสียงเตือนดัง
+    tone(BUZZER, 1000);
+    delay(150);
+
+    digitalWrite(LED_RED, LOW);
+    noTone(BUZZER);
+    delay(150);
+
+  } else {
+    // นอกช่วงอันตราย
+    digitalWrite(LED_RED, LOW);
+    noTone(BUZZER);
+    delay(150);
+  }
+}
